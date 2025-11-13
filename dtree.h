@@ -13,6 +13,7 @@ struct DOMTag {
 typedef struct DOMTag *DOMTree;
 
 DOMTree dtree_make(void);
+void dtree_free(DOMTree t);
 int dtree_empty(DOMTree t);
 DOMTree dtree_insert(DOMTree t, Tag tag);
 void dtree_print(DOMTree t);

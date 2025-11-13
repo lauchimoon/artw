@@ -21,5 +21,6 @@ int main()
     dtree_insert(p, text);
 
     dtree_print(root);
+    dtree_free(root);
     return 0;
 }

@@ -15,6 +15,19 @@ DOMTree dtree_make(void)
     return NULL;
 }
 
+void dtree_free(DOMTree t)
+{
+    if (dtree_empty(t))
+        return;
+
+    for (int i = 0; i < t->maxchild; ++i)
+        dtree_free(t->nodes[i]);
+
+    free(t->tag.content);
+    free(t->nodes);
+    free(t);
+}
+
 int dtree_empty(DOMTree t)
 {
     return t == NULL;
