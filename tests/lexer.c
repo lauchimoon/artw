@@ -5,7 +5,7 @@ char *tokenkind_string(MDTokenKind kind);
 
 int main()
 {
-    char *src = "# Title\n## Subtitle\n### Subsubtitle\n####### Nothing.\nHello world!\nThis does not leave the same paragraph.\n\nThis does!";
+    char *src = "# Title\n## Subtitle\n### Subsubtitle\n####### Nothing.\n#Paragraph!\nHello world!\nThis does not leave the same paragraph.\n\nThis does!";
     MDLexer *lexer = mdlexer_new(src);
 
     MDTokenArray *tokens = mdlexer_lex(lexer);
