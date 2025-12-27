@@ -55,11 +55,10 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             if (token.kind > MDTK_H6)
                 token.kind = MDTK_P;
 
-            // Space after hash is required
             if (lexer_current(lexer) != ' ')
-                return NULL;
-
-            lexer_advance(lexer);
+                token.kind = MDTK_P;
+            else
+                lexer_advance(lexer);
 
             char text[256] = { 0 };
             int text_index = 0;
