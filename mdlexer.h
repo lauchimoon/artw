@@ -5,6 +5,11 @@ typedef enum {
     MDTK_NONE = -1,
     MDTK_P = 0,
     MDTK_H1,
+    MDTK_H2,
+    MDTK_H3,
+    MDTK_H4,
+    MDTK_H5,
+    MDTK_H6,
 } MDTokenKind;
 
 typedef struct MDToken {

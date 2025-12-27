@@ -45,7 +45,15 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
         MDToken token;
         // Headings
         if (lexer_current(lexer) == '#') {
+            token.kind = MDTK_H1;
             lexer_advance(lexer);
+            while (lexer_current(lexer) == '#' && token.kind <= MDTK_H6) {
+                token.kind++;
+                lexer_advance(lexer);
+            }
+
+            if (token.kind > MDTK_H6)
+                token.kind = MDTK_P;
 
             // Space after hash is required
             if (lexer_current(lexer) != ' ')
@@ -62,10 +70,9 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 
             text[text_index] = '\0';
             token.content = strdup(text);
-            token.kind = MDTK_H1;
             tokenarr_append(tokens, token);
 
-            // Paragraphs: assumes ascii only for now
+        // Paragraphs: assumes ascii only for now
         } else if (isalpha(lexer_current(lexer))) {
             char text[256] = { 0 };
             int text_index = 0;
