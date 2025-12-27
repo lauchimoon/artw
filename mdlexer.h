@@ -2,19 +2,19 @@
 #define MDLEXER_H
 
 typedef enum {
-	MDTK_NONE = -1,
-	MDTK_P = 0,
-	MDTK_H1,
+    MDTK_NONE = -1,
+    MDTK_P = 0,
+    MDTK_H1,
 } MDTokenKind;
 
 typedef struct MDToken {
-	MDTokenKind kind;
-	char *content;
+    MDTokenKind kind;
+    char *content;
 } MDToken;
 
 typedef struct MDTokenArray {
-	MDToken *items;
-	int len, cap;
+    MDToken *items;
+    int len, cap;
 } MDTokenArray;
 
 typedef struct MDLexer {
