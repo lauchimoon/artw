@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define MAX_CHILD_MIN 256
 
@@ -43,6 +44,7 @@ DOMTree dtree_insert(DOMTree t, Tag tag)
             int old_cap = t->maxchild;
             t->maxchild *= 2;
             t->nodes = realloc(t->nodes, t->maxchild*sizeof(DOMTree));
+            assert(t->nodes != NULL);
             for (int i = old_cap; i < t->maxchild; ++i)
                 t->nodes[i] = NULL;
         }
@@ -60,10 +62,12 @@ void dtree_print(DOMTree t)
 DOMTree make_node(Tag tag)
 {
     DOMTree node = malloc(sizeof(struct DOMTag));
+    assert(node != NULL);
     tagcpy(&node->tag, tag);
     node->nchild = 0;
     node->maxchild = MAX_CHILD_MIN;
     node->nodes = malloc(node->maxchild*sizeof(struct DOMTag));
+    assert(node->nodes != NULL);
     for (int i = 0; i < node->maxchild; ++i)
         node->nodes[i] = dtree_make();
 
