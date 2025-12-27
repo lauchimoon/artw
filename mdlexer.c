@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define INIT_CAP 256
 
@@ -42,6 +43,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 
 	while (lexer->cursor < lexer->srcLen) {
 		MDToken token;
+		// Headings
 		if (lexer_current(lexer) == '#') {
 			lexer_advance(lexer);
 
@@ -52,15 +54,40 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 			lexer_advance(lexer);
 
 			char text[256] = { 0 };
-			int textIndex = 0;
+			int text_index = 0;
 			while (lexer_current(lexer) != '\n') {
-				text[textIndex++] = lexer_current(lexer);
+				text[text_index++] = lexer_current(lexer);
 				lexer_advance(lexer);
 			}
 
-			text[textIndex] = '\0';
+			text[text_index] = '\0';
 			token.content = strdup(text);
 			token.kind = MDTK_H1;
+			tokenarr_append(tokens, token);
+
+		// Paragraphs: assumes ascii only for now
+		} else if (isalpha(lexer_current(lexer))) {
+			char text[256] = { 0 };
+			int text_index = 0;
+			while (lexer_current(lexer) != '\0') {
+				// If a true line break is found, also exit the loop
+				if (lexer_peek(lexer) == '\n') {
+					// We're advancing, so write the character it consumes
+					text[text_index++] = lexer_current(lexer);
+					lexer_advance(lexer);
+					if (lexer_peek(lexer) == '\n')
+						break;
+				}
+
+				// We're not breaking lines, so just write a space instead
+				char curr = lexer_current(lexer);
+				text[text_index++] = (curr == '\n')? ' ' : curr;
+				lexer_advance(lexer);
+			}
+
+			text[text_index] = '\0';
+			token.content = strdup(text);
+			token.kind = MDTK_P;
 			tokenarr_append(tokens, token);
 		}
 
