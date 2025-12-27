@@ -3,17 +3,21 @@ SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 OUT = artw
 
-default: artw.o dtree.o tag.o
+default: artw.o mdlexer.o dtree.o tag.o
 	$(CC) -o $(OUT) $(OBJ)
 
 clean:
 	rm *.o
 	rm $(OUT)
 
+
 artw.o: artw.c dtree.h tag.h
 	$(CC) -c $<
 
 dtree.o: dtree.c dtree.h tag.h
+	$(CC) -c $<
+
+mdlexer.o: mdlexer.c mdlexer.h
 	$(CC) -c $<
 
 tag.o: tag.c tag.h
