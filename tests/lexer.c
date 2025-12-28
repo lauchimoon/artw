@@ -1,11 +1,20 @@
 #include "../mdlexer.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
+char *read_file(char *path);
 char *tokenkind_string(MDTokenKind kind);
 
-int main()
+int main(int argc, char **argv)
 {
-    char *src = "# Title\n## Subtitle\n### Subsubtitle\n####### Nothing.\n#Paragraph!\nHello world!\nThis does not leave the same paragraph.\n\nThis does!";
+    if (argc < 2) {
+        printf("Markdown file to test is required.\n");
+        return 1;
+    }
+
+    char *src = read_file(argv[1]);
     MDLexer *lexer = mdlexer_new(src);
 
     MDTokenArray *tokens = mdlexer_lex(lexer);
@@ -21,6 +30,26 @@ int main()
     mdlexer_tokenarray_free(tokens);
     mdlexer_free(lexer);
     return 0;
+}
+
+char *read_file(char *path)
+{
+    FILE *f = fopen(path, "r");
+    fseek(f, 0L, SEEK_END);
+    size_t filesize = ftell(f);
+    fseek(f, 0L, SEEK_SET);
+
+    char *file = calloc(filesize + 1, sizeof(char));
+    assert(file != NULL);
+
+#define BUFSIZE 2048
+    int idx = 0;
+    char c;
+    while ((c = fgetc(f)) != EOF)
+        file[idx++] = c;
+
+    fclose(f);
+    return file;
 }
 
 char *tokenkind_string(MDTokenKind kind)
