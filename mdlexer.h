@@ -3,15 +3,12 @@
 
 typedef enum {
     MDTK_NONE = -1,
-    MDTK_P = 0,
-    MDTK_H1,
-    MDTK_H2,
-    MDTK_H3,
-    MDTK_H4,
-    MDTK_H5,
-    MDTK_H6,
-    MDTK_UL_ITEM,
-    MDTK_OL_ITEM,
+    MDTK_TEXT = 0,
+    MDTK_ITALIC_DELIMITER,
+    MDTK_BOLD_DELIMITER,
+    MDTK_HEADING_DELIMITER,
+    MDTK_UL_DELIMITER,
+    MDTK_OL_DELIMITER,
 } MDTokenKind;
 
 typedef struct MDToken {

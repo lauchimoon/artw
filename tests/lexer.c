@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 char *read_file(char *path);
 void print_token(MDToken token);
@@ -47,6 +48,7 @@ char *read_file(char *path)
     while ((c = fgetc(f)) != EOF)
         file[idx++] = c;
 
+    file[idx - 1] = 0;
     fclose(f);
     return file;
 }
@@ -59,15 +61,12 @@ void print_token(MDToken token)
 char *tokenkind_string(MDTokenKind kind)
 {
     switch (kind) {
-        case MDTK_P: return "p";
-        case MDTK_H1: return "h1";
-        case MDTK_H2: return "h2";
-        case MDTK_H3: return "h3";
-        case MDTK_H4: return "h4";
-        case MDTK_H5: return "h5";
-        case MDTK_H6: return "h6";
-        case MDTK_UL_ITEM: return "ul item";
-        case MDTK_OL_ITEM: return "ol item";
+        case MDTK_TEXT: return "text";
+        case MDTK_ITALIC_DELIMITER: return "italic";
+        case MDTK_BOLD_DELIMITER: return "bold";
+        case MDTK_HEADING_DELIMITER: return "heading";
+        case MDTK_UL_DELIMITER: return "ul item";
+        case MDTK_OL_DELIMITER: return "ol item";
     }
     return "?";
 }
