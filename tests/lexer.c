@@ -16,10 +16,15 @@ int main(int argc, char **argv)
     }
 
     char *src = read_file(argv[1]);
+    if (!src) {
+        printf("Sorry.\n");
+        return 1;
+    }
+
     MDLexer *lexer = mdlexer_new(src);
 
     MDTokenArray *tokens = mdlexer_lex(lexer);
-    if (tokens == NULL) {
+    if (!tokens) {
         printf("Sorry.\n");
         return 1;
     }
@@ -35,6 +40,9 @@ int main(int argc, char **argv)
 char *read_file(char *path)
 {
     FILE *f = fopen(path, "r");
+    if (!f)
+        return NULL;
+
     fseek(f, 0L, SEEK_END);
     size_t filesize = ftell(f);
     fseek(f, 0L, SEEK_SET);
@@ -68,6 +76,11 @@ char *tokenkind_string(MDTokenKind kind)
         case MDTK_UL_DELIMITER: return "ul item";
         case MDTK_OL_DELIMITER: return "ol item";
         case MDTK_LINE_BREAK: return "line break";
+        case MDTK_IMAGE_DELIMITER: return "image";
+        case MDTK_ALT_START: return "alt start";
+        case MDTK_LINK_START: return "link start";
+        case MDTK_LINK_END: return "link end";
+        case MDTK_ALT_END: return "alt end";
     }
     return "?";
 }

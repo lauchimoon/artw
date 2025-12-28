@@ -37,6 +37,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 {
     MDTokenArray *tokens = tokenarr_init();
     assert(tokens != NULL);
+    bool reading_code = false;
 
     while (lexer->cursor < lexer->src_len) {
         MDToken token;
@@ -47,7 +48,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup("\\n");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '*' && lexer_peek(lexer) == '*') {
+        } else if (reading_codecurrent == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");
             tokenarr_append(tokens, token);
@@ -83,6 +84,31 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
                 token.kind = MDTK_TEXT;
 
             token.content = strndup(lexer->src + start, lexer->cursor - start);
+            tokenarr_append(tokens, token);
+            ++lexer->cursor;
+        } else if (current == '!') {
+            token.kind = MDTK_IMAGE_DELIMITER;
+            token.content = strdup("!");
+            tokenarr_append(tokens, token);
+            ++lexer->cursor;
+        } else if (current == '[') {
+            token.kind = MDTK_ALT_START;
+            token.content = strdup("[");
+            tokenarr_append(tokens, token);
+            ++lexer->cursor;
+        } else if (current == '(') {
+            token.kind = MDTK_LINK_START;
+            token.content = strdup("(");
+            tokenarr_append(tokens, token);
+            ++lexer->cursor;
+        } else if (current == ')') {
+            token.kind = MDTK_LINK_END;
+            token.content = strdup(")");
+            tokenarr_append(tokens, token);
+            ++lexer->cursor;
+        } else if (current == ']') {
+            token.kind = MDTK_ALT_END;
+            token.content = strdup("]");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
         } else {
@@ -141,5 +167,6 @@ char lexer_peek(MDLexer *lexer)
 
 bool is_delimiter(char c)
 {
-    return c == '*' || c == '\n' || c == '\0';
+    return c == '*' || c == '[' || c == ']' || c == '(' || c == ')' ||
+        c == '\n' || c == '\0';
 }

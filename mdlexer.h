@@ -10,6 +10,11 @@ typedef enum {
     MDTK_UL_DELIMITER,
     MDTK_OL_DELIMITER,
     MDTK_LINE_BREAK,
+    MDTK_IMAGE_DELIMITER,
+    MDTK_ALT_START,
+    MDTK_LINK_START,
+    MDTK_LINK_END,
+    MDTK_ALT_END,
 } MDTokenKind;
 
 typedef struct MDToken {
