@@ -42,8 +42,15 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
         MDToken token;
         char current = lexer->src[lexer->cursor];
 
-        if (current == '\n')
+        if (current == '\n') {
+            if (lexer_peek(lexer) == '\n') {
+                token.kind = MDTK_LINE_BREAK;
+                token.content = strdup("\\n");
+                tokenarr_append(tokens, token);
+                ++lexer->cursor;
+            }
             ++lexer->cursor;
+        }
         else if (current == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");

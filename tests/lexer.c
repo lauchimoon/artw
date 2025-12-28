@@ -67,6 +67,7 @@ char *tokenkind_string(MDTokenKind kind)
         case MDTK_HEADING_DELIMITER: return "heading";
         case MDTK_UL_DELIMITER: return "ul item";
         case MDTK_OL_DELIMITER: return "ol item";
+        case MDTK_LINE_BREAK: return "line break";
     }
     return "?";
 }
