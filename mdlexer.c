@@ -126,6 +126,9 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 
 void mdlexer_tokenarray_free(MDTokenArray *arr)
 {
+    for (int i = 0; i < arr->len; i++)
+        free(arr->items[i].content);
+
     arr->cap = 0;
     arr->len = 0;
     free(arr->items);
