@@ -22,7 +22,7 @@ MDLexer *mdlexer_new(char *src)
     assert(lexer != NULL);
 
     lexer->src = strdup(src);
-    lexer->srcLen = strlen(src);
+    lexer->src_len = strlen(src);
     lexer->cursor = 0;
 
     return lexer;
@@ -43,7 +43,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
     tokens->len = 0;
     tokenarr_init(tokens);
 
-    while (lexer->cursor < lexer->srcLen) {
+    while (lexer->cursor < lexer->src_len) {
         MDToken token;
         // Headings
         if (lexer_current(lexer) == '#') {
@@ -89,6 +89,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup(text);
             token.kind = MDTK_P;
             tokenarr_append(tokens, token);
+
         // Unordered lists
         } else if (lexer_current(lexer) == '-') {
             token.kind = MDTK_UL_ITEM;
@@ -153,7 +154,7 @@ void tokenarr_append(MDTokenArray *arr, MDToken token)
 
 void lexer_advance(MDLexer *lexer)
 {
-    if (lexer->cursor < lexer->srcLen)
+    if (lexer->cursor < lexer->src_len)
         ++lexer->cursor;
 }
 
@@ -164,7 +165,7 @@ char lexer_current(MDLexer *lexer)
 
 char lexer_peek(MDLexer *lexer)
 {
-    if (lexer->cursor + 1 < lexer->srcLen)
+    if (lexer->cursor + 1 < lexer->src_len)
         return lexer->src[lexer->cursor + 1];
 
     return lexer->src[lexer->cursor];

@@ -26,7 +26,7 @@ typedef struct MDTokenArray {
 
 typedef struct MDLexer {
     char *src;
-    int srcLen;
+    int src_len;
     int cursor;
 } MDLexer;
 
