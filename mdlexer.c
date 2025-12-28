@@ -8,8 +8,6 @@
 
 #define INIT_CAP 256
 
-void lexer_advance(MDLexer *lexer, int n);
-char lexer_current(MDLexer *lexer);
 char lexer_peek(MDLexer *lexer);
 
 MDTokenArray *tokenarr_init(void);
@@ -128,17 +126,6 @@ void tokenarr_append(MDTokenArray *tokens, MDToken token)
     }
 
     tokens->items[tokens->len++] = token;
-}
-
-void lexer_advance(MDLexer *lexer, int n)
-{
-    if (lexer->cursor < lexer->src_len)
-        lexer->cursor += n;
-}
-
-char lexer_current(MDLexer *lexer)
-{
-    return lexer->src[lexer->cursor];
 }
 
 char lexer_peek(MDLexer *lexer)
