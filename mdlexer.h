@@ -10,6 +10,8 @@ typedef enum {
     MDTK_H4,
     MDTK_H5,
     MDTK_H6,
+    MDTK_UL_ITEM,
+    MDTK_OL_ITEM,
 } MDTokenKind;
 
 typedef struct MDToken {

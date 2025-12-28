@@ -14,6 +14,8 @@ void lexer_advance(MDLexer *lexer);
 char lexer_current(MDLexer *lexer);
 char lexer_peek(MDLexer *lexer);
 
+char *read_until_newline(MDLexer *lexer);
+
 MDLexer *mdlexer_new(char *src)
 {
     MDLexer *lexer = malloc(sizeof(MDLexer));
@@ -60,15 +62,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             else
                 lexer_advance(lexer);
 
-            char text[256] = { 0 };
-            int text_index = 0;
-            while (lexer_current(lexer) != '\n') {
-                text[text_index++] = lexer_current(lexer);
-                lexer_advance(lexer);
-            }
-
-            text[text_index] = '\0';
-            token.content = strdup(text);
+            token.content = read_until_newline(lexer);
             tokenarr_append(tokens, token);
 
         // Paragraphs: assumes ascii only for now
@@ -95,6 +89,33 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup(text);
             token.kind = MDTK_P;
             tokenarr_append(tokens, token);
+        // Unordered lists
+        } else if (lexer_current(lexer) == '-') {
+            token.kind = MDTK_UL_ITEM;
+            lexer_advance(lexer);
+            if (lexer_current(lexer) != ' ')
+                token.kind = MDTK_P;
+            else
+                lexer_advance(lexer);
+
+            token.content = read_until_newline(lexer);
+            tokenarr_append(tokens, token);
+        } else if (isdigit(lexer_current(lexer))) {
+            // Any number is valid!
+            while (isdigit(lexer_current(lexer)))
+                lexer_advance(lexer);
+
+            token.kind = MDTK_OL_ITEM;
+            if (lexer_current(lexer) != '.' && lexer_peek(lexer) != ' ')
+                token.kind = MDTK_P;
+            else {
+                // Skip dot and space
+                lexer_advance(lexer);
+                lexer_advance(lexer);
+            }
+
+            token.content = read_until_newline(lexer);
+            tokenarr_append(tokens, token);
         }
 
         lexer_advance(lexer);
@@ -115,9 +136,7 @@ void tokenarr_init(MDTokenArray *arr)
 {
     arr->cap = INIT_CAP;
     arr->len = 0;
-    arr->items = malloc(arr->cap*sizeof(MDToken));
-    for (int i = 0; i < arr->cap; i++)
-        arr->items[i] = (MDToken){ .content = NULL, .kind = MDTK_NONE };
+    arr->items = calloc(arr->cap, sizeof(MDToken));
 }
 
 void tokenarr_append(MDTokenArray *arr, MDToken token)
@@ -146,4 +165,19 @@ char lexer_peek(MDLexer *lexer)
         return lexer->src[lexer->cursor + 1];
 
     return lexer->src[lexer->cursor];
+}
+
+char *read_until_newline(MDLexer *lexer)
+{
+    // Temporary fixed-size buffer
+#define BUFFER_SIZE 256
+    char *text = malloc(BUFFER_SIZE*sizeof(char));
+    int text_index = 0;
+    while (lexer_current(lexer) != '\n') {
+        text[text_index++] = lexer_current(lexer);
+        lexer_advance(lexer);
+    }
+
+    text[text_index] = '\0';
+    return text;
 }

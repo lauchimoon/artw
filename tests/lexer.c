@@ -5,6 +5,7 @@
 #include <assert.h>
 
 char *read_file(char *path);
+void print_token(MDToken token);
 char *tokenkind_string(MDTokenKind kind);
 
 int main(int argc, char **argv)
@@ -23,9 +24,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    for (int i = 0; i < tokens->len; i++) {
-        printf("%s: \"%s\"\n", tokenkind_string(tokens->items[i].kind), tokens->items[i].content);
-    }
+    for (int i = 0; i < tokens->len; i++)
+        print_token(tokens->items[i]);
 
     mdlexer_tokenarray_free(tokens);
     mdlexer_free(lexer);
@@ -52,6 +52,11 @@ char *read_file(char *path)
     return file;
 }
 
+void print_token(MDToken token)
+{
+    printf("%s: \"%s\"\n", tokenkind_string(token.kind), token.content);
+}
+
 char *tokenkind_string(MDTokenKind kind)
 {
     switch (kind) {
@@ -62,6 +67,8 @@ char *tokenkind_string(MDTokenKind kind)
         case MDTK_H4: return "h4";
         case MDTK_H5: return "h5";
         case MDTK_H6: return "h6";
+        case MDTK_UL_ITEM: return "ul item";
+        case MDTK_OL_ITEM: return "ol item";
     }
     return "?";
 }
