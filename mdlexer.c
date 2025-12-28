@@ -37,7 +37,6 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 {
     MDTokenArray *tokens = tokenarr_init();
     assert(tokens != NULL);
-    bool reading_code = false;
 
     while (lexer->cursor < lexer->src_len) {
         MDToken token;
@@ -48,7 +47,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup("\\n");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (reading_codecurrent == '*' && lexer_peek(lexer) == '*') {
+        } else if (current == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");
             tokenarr_append(tokens, token);
