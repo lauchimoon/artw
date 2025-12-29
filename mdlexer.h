@@ -15,6 +15,7 @@ typedef enum {
     MDTK_LINK_START,
     MDTK_LINK_END,
     MDTK_ALT_END,
+    MDTK_CODEBLOCK,
 } MDTokenKind;
 
 typedef struct MDToken {

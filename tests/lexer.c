@@ -81,6 +81,7 @@ char *tokenkind_string(MDTokenKind kind)
         case MDTK_LINK_START: return "link start";
         case MDTK_LINK_END: return "link end";
         case MDTK_ALT_END: return "alt end";
+        case MDTK_CODEBLOCK: return "code";
     }
     return "?";
 }

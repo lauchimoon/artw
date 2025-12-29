@@ -13,7 +13,9 @@ char lexer_peek(MDLexer *lexer);
 MDTokenArray *tokenarr_init(void);
 void tokenarr_append(MDTokenArray *tokens, MDToken token);
 
-bool is_delimiter(char c);
+bool is_delimiter(char c, bool reading_code);
+bool is_reading_codeblock(MDLexer *lexer);
+int find_first(char *s, char c);
 
 MDLexer *mdlexer_new(char *src)
 {
@@ -37,6 +39,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 {
     MDTokenArray *tokens = tokenarr_init();
     assert(tokens != NULL);
+    bool reading_code = false;
 
     while (lexer->cursor < lexer->src_len) {
         MDToken token;
@@ -47,17 +50,17 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup("\\n");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '*' && lexer_peek(lexer) == '*') {
+        } else if (!reading_code && current == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");
             tokenarr_append(tokens, token);
             lexer->cursor += 2;
-        } else if (current == '*') {
+        } else if (!reading_code && current == '*') {
             token.kind = MDTK_ITALIC_DELIMITER;
             token.content = strdup("*");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '#') {
+        } else if (!reading_code && current == '#') {
             while (current == '#') {
                 token.kind = MDTK_HEADING_DELIMITER;
                 token.content = strdup("#");
@@ -65,12 +68,12 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
                 ++lexer->cursor;
                 current = lexer->src[lexer->cursor];
             }
-        } else if (current == '-') {
+        } else if (!reading_code && current == '-') {
             token.kind = MDTK_UL_DELIMITER;
             token.content = strdup("-");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (isdigit(current)) {
+        } else if (!reading_code && isdigit(current)) {
             int start = lexer->cursor;
             while (isdigit(current)) {
                 ++lexer->cursor;
@@ -85,35 +88,41 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strndup(lexer->src + start, lexer->cursor - start);
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '!') {
+        } else if (!reading_code && current == '!') {
             token.kind = MDTK_IMAGE_DELIMITER;
             token.content = strdup("!");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '[') {
+        } else if (!reading_code && current == '[') {
             token.kind = MDTK_ALT_START;
             token.content = strdup("[");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == '(') {
+        } else if (!reading_code && current == '(') {
             token.kind = MDTK_LINK_START;
             token.content = strdup("(");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == ')') {
+        } else if (!reading_code && current == ')') {
             token.kind = MDTK_LINK_END;
             token.content = strdup(")");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (current == ']') {
+        } else if (!reading_code && current == ']') {
             token.kind = MDTK_ALT_END;
             token.content = strdup("]");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
+        } else if (is_reading_codeblock(lexer)) {
+            token.kind = MDTK_CODEBLOCK;
+            token.content = strdup("```");
+            reading_code = !reading_code;
+            tokenarr_append(tokens, token);
+            lexer->cursor += 3;
         } else {
             token.kind = MDTK_TEXT;
             int start = lexer->cursor;
-            while (!is_delimiter(current)) {
+            while (!is_delimiter(current, reading_code)) {
                 ++lexer->cursor;
                 current = lexer->src[lexer->cursor];
             }
@@ -164,8 +173,27 @@ char lexer_peek(MDLexer *lexer)
     return lexer->src[lexer->cursor + 1];
 }
 
-bool is_delimiter(char c)
+bool is_delimiter(char c, bool reading_code)
 {
+    if (reading_code)
+        return c == '\n' || c == '\0';
+
     return c == '*' || c == '[' || c == ']' || c == '(' || c == ')' ||
         c == '\n' || c == '\0';
+}
+
+bool is_reading_codeblock(MDLexer *lexer)
+{
+    int cursor = lexer->cursor;
+    return lexer->src[cursor] == '`' && lexer->src[cursor + 1] == '`' &&
+        lexer->src[cursor + 2] == '`';
+}
+
+int find_first(char *s, char c)
+{
+    for (int i = 0; s[i]; ++i)
+        if (s[i] == c)
+            return i;
+
+    return -1;
 }
