@@ -36,20 +36,46 @@ int main(int argc, char **argv)
     MDLexer *lexer = mdlexer_new(src);
     MDTokenArray *tokens = mdlexer_lex(lexer);
 
-    // Build DOMTree directly
-    // NOTE: this will change in the future
+    // Build DOMTree
+    DOMTree current = NULL;
     for (int i = 0; i < tokens->len; ++i) {
         MDToken token = tokens->items[i];
-        if (token.kind != MDTK_LINE_BREAK) {
-            if (token.kind == MDTK_TEXT) {
-                dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
-                DOMTree p = body->nodes[body->nchild - 1];
-                dtree_insert(p, tag_make(TAGTYPE_TEXT, token.content));
-            } else {
-                printf("%s: ", token.content);
-                printf("TODO: token not implemented\n");
-                return 1;
+        if (token.kind == MDTK_LINE_BREAK) {
+            current = NULL;
+            continue;
+        }
+
+        if (!current) {
+            switch (token.kind) {
+                default:
+                    dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
             }
+
+            if (!current)
+                current = body->nodes[body->nchild - 1];
+        }
+
+        if (token.kind == MDTK_TEXT)
+            dtree_insert(current, tag_make(TAGTYPE_TEXT, token.content));
+        else if (token.kind == MDTK_ITALIC_DELIMITER &&
+                    tokens->items[i + 2].kind == MDTK_ITALIC_DELIMITER) {
+            MDToken text = tokens->items[i + 1];
+            dtree_insert(current, tag_make(TAGTYPE_ELEMENT, "i"));
+            DOMTree italic = current->nodes[current->nchild - 1];
+            dtree_insert(italic, tag_make(TAGTYPE_TEXT, text.content));
+            i += 2;
+        } else if (token.kind == MDTK_BOLD_DELIMITER &&
+                    tokens->items[i + 2].kind == MDTK_BOLD_DELIMITER) {
+            MDToken text = tokens->items[i + 1];
+            dtree_insert(current, tag_make(TAGTYPE_ELEMENT, "b"));
+            DOMTree bold = current->nodes[current->nchild - 1];
+            dtree_insert(bold, tag_make(TAGTYPE_TEXT, text.content));
+            i += 2;
+        }
+        else {
+            printf("%s: ", token.content);
+            printf("TODO: token not implemented\n");
+            return 1;
         }
     }
 
