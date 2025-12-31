@@ -8,8 +8,8 @@
 
 DOMTree make_node(Tag tag);
 void tagcpy(Tag *dst, Tag src);
-void dtree_print_helper(DOMTree t, int level);
-void indent(int level);
+void dtree_print_helper(DOMTree t, int level, FILE *out_file);
+void indent(int level, FILE *out_file);
 
 DOMTree dtree_make(void)
 {
@@ -54,9 +54,9 @@ DOMTree dtree_insert(DOMTree t, Tag tag)
     return t;
 }
 
-void dtree_print(DOMTree t)
+void dtree_print(DOMTree t, FILE *out_file)
 {
-    dtree_print_helper(t, 0);
+    dtree_print_helper(t, 0, out_file);
 }
 
 DOMTree make_node(Tag tag)
@@ -80,28 +80,28 @@ void tagcpy(Tag *dst, Tag src)
     dst->content = strdup(src.content);
 }
 
-void dtree_print_helper(DOMTree t, int level)
+void dtree_print_helper(DOMTree t, int level, FILE *out_file)
 {
     if (dtree_empty(t))
         return;
 
-    indent(level);
+    indent(level, out_file);
     if (t->tag.type == TAGTYPE_ELEMENT)
-        printf("<%s>\n", t->tag.content);
+        fprintf(out_file, "<%s>\n", t->tag.content);
     else
-        printf("%s\n", t->tag.content);
+        fprintf(out_file, "%s\n", t->tag.content);
 
     for (int i = 0; i < t->nchild; ++i)
-        dtree_print_helper(t->nodes[i], level + 1);
+        dtree_print_helper(t->nodes[i], level + 1, out_file);
 
     if (t->tag.type == TAGTYPE_ELEMENT) {
-        indent(level);
-        printf("</%s>\n", t->tag.content);
+        indent(level, out_file);
+        fprintf(out_file, "</%s>\n", t->tag.content);
     }
 }
 
-void indent(int level)
+void indent(int level, FILE *out_file)
 {
     for (int i = 0; i < level; ++i)
-        printf("  ");
+        fprintf(out_file, "  ");
 }

@@ -6,15 +6,17 @@
 #include "mdlexer.h"
 
 #define streq(a, b) (strcmp((a), (b)) == 0)
-#define fail(s, ...) printf(s); return 1;
 
-char *read_file(char *path);
+char *read_file(const char *path);
 
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        fail("usage: %s <markdown file>\n", argv[0]);
+        printf("usage: %s <markdown file> [output file]\n", argv[0]);
+        return 1;
     }
+
+    FILE *output_file = (argc < 3)? stdout : fopen(argv[2], "w");
 
     DOMTree root = dtree_make();
     Tag html_tag = tag_make(TAGTYPE_ELEMENT, "html");
@@ -24,7 +26,13 @@ int main(int argc, char **argv)
     dtree_insert(root, body_tag);
     DOMTree body = root->nodes[root->nchild - 1];
 
-    char *src = read_file(argv[1]);
+    const char *src_filename = argv[1];
+    char *src = read_file(src_filename);
+    if (!src) {
+        printf("%s: file '%s' does not exist or is not a Markdown file.\n", argv[0], src_filename);
+        return 1;
+    }
+
     MDLexer *lexer = mdlexer_new(src);
     MDTokenArray *tokens = mdlexer_lex(lexer);
 
@@ -39,7 +47,8 @@ int main(int argc, char **argv)
                 dtree_insert(p, tag_make(TAGTYPE_TEXT, token.content));
             } else {
                 printf("%s: ", token.content);
-                fail("TODO: token not implemented\n");
+                printf("TODO: token not implemented\n");
+                return 1;
             }
         }
     }
@@ -47,16 +56,19 @@ int main(int argc, char **argv)
     mdlexer_tokenarray_free(tokens);
     mdlexer_free(lexer);
 
-    dtree_print(root);
+    dtree_print(root, output_file);
     dtree_free(root);
     free(src);
     return 0;
 }
 
-char *read_file(char *path)
+char *read_file(const char *path)
 {
     FILE *f = fopen(path, "r");
     if (!f)
+        return NULL;
+
+    if (!strstr(path, ".md"))
         return NULL;
 
     fseek(f, 0L, SEEK_END);
@@ -72,7 +84,7 @@ char *read_file(char *path)
     while ((c = fgetc(f)) != EOF)
         file[idx++] = c;
 
-    file[idx - 1] = 0;
+    file[idx - 1] = '\0';
     fclose(f);
     return file;
 }
