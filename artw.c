@@ -41,7 +41,9 @@ int main(int argc, char **argv)
     for (int i = 0; i < tokens->len; ++i) {
         MDToken token = tokens->items[i];
         if (token.kind == MDTK_LINE_BREAK) {
-            current = NULL;
+            if (tokens->items[i + 1].kind == MDTK_LINE_BREAK)
+                current = NULL;
+
             continue;
         }
 
