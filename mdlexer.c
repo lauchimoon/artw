@@ -8,12 +8,18 @@
 
 #define INIT_CAP 256
 
+enum {
+    CTX_FREE = 0,
+    CTX_READING_LIST,
+    CTX_READING_CODE
+};
+
 char lexer_peek(MDLexer *lexer);
 
 MDTokenArray *tokenarr_init(void);
 void tokenarr_append(MDTokenArray *tokens, MDToken token);
 
-bool is_delimiter(char c, bool reading_code);
+bool is_delimiter(char c, int ctx);
 bool is_reading_codeblock(MDLexer *lexer);
 int find_first(char *s, char c);
 
@@ -39,7 +45,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
 {
     MDTokenArray *tokens = tokenarr_init();
     assert(tokens != NULL);
-    bool reading_code = false;
+    int ctx = CTX_FREE;
 
     while (lexer->cursor < lexer->src_len) {
         MDToken token;
@@ -50,17 +56,18 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup("\\n");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == '*' && lexer_peek(lexer) == '*') {
+            ctx = CTX_FREE;
+        } else if (ctx == CTX_FREE && current == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");
             tokenarr_append(tokens, token);
             lexer->cursor += 2;
-        } else if (!reading_code && current == '*') {
+        } else if (ctx == CTX_FREE && current == '*') {
             token.kind = MDTK_ITALIC_DELIMITER;
             token.content = strdup("*");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == '#') {
+        } else if (ctx == CTX_FREE && current == '#') {
             while (current == '#') {
                 token.kind = MDTK_HEADING_DELIMITER;
                 token.content = strdup("#");
@@ -68,12 +75,13 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
                 ++lexer->cursor;
                 current = lexer->src[lexer->cursor];
             }
-        } else if (!reading_code && current == '-') {
+        } else if (ctx == CTX_FREE && current == '-') {
             token.kind = MDTK_UL_DELIMITER;
             token.content = strdup("-");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && isdigit(current)) {
+            ctx = CTX_READING_LIST;
+        } else if (ctx == CTX_FREE && isdigit(current)) {
             int start = lexer->cursor;
             while (isdigit(current)) {
                 ++lexer->cursor;
@@ -88,27 +96,28 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strndup(lexer->src + start, lexer->cursor - start);
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == '!') {
+            ctx = CTX_READING_LIST;
+        } else if (ctx == CTX_FREE && current == '!') {
             token.kind = MDTK_IMAGE_DELIMITER;
             token.content = strdup("!");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == '[') {
+        } else if (ctx == CTX_FREE && current == '[') {
             token.kind = MDTK_ALT_START;
             token.content = strdup("[");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == '(') {
+        } else if (ctx == CTX_FREE && current == '(') {
             token.kind = MDTK_LINK_START;
             token.content = strdup("(");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == ')') {
+        } else if (ctx == CTX_FREE && current == ')') {
             token.kind = MDTK_LINK_END;
             token.content = strdup(")");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-        } else if (!reading_code && current == ']') {
+        } else if (ctx == CTX_FREE && current == ']') {
             token.kind = MDTK_ALT_END;
             token.content = strdup("]");
             tokenarr_append(tokens, token);
@@ -116,13 +125,13 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
         } else if (is_reading_codeblock(lexer)) {
             token.kind = MDTK_CODEBLOCK;
             token.content = strdup("```");
-            reading_code = !reading_code;
             tokenarr_append(tokens, token);
             lexer->cursor += 3;
+            ctx = CTX_READING_CODE;
         } else {
             token.kind = MDTK_TEXT;
             int start = lexer->cursor;
-            while (!is_delimiter(current, reading_code)) {
+            while (!is_delimiter(current, ctx)) {
                 ++lexer->cursor;
                 current = lexer->src[lexer->cursor];
             }
@@ -173,9 +182,9 @@ char lexer_peek(MDLexer *lexer)
     return lexer->src[lexer->cursor + 1];
 }
 
-bool is_delimiter(char c, bool reading_code)
+bool is_delimiter(char c, int ctx)
 {
-    if (reading_code)
+    if (ctx != CTX_FREE)
         return c == '\n' || c == '\0';
 
     return c == '*' || c == '[' || c == ']' || c == '(' || c == ')' ||
