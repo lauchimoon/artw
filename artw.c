@@ -8,6 +8,7 @@
 #define streq(a, b) (strcmp((a), (b)) == 0)
 
 char *read_file(const char *path);
+char *repeat_char(char c, int count);
 
 int main(int argc, char **argv)
 {
@@ -38,25 +39,46 @@ int main(int argc, char **argv)
 
     // Build DOMTree
     DOMTree current = NULL;
+    bool reading_paragraph = false;
     for (int i = 0; i < tokens->len; ++i) {
         MDToken token = tokens->items[i];
         if (token.kind == MDTK_LINE_BREAK) {
-            if (tokens->items[i + 1].kind == MDTK_LINE_BREAK)
+            if (!reading_paragraph)
                 current = NULL;
+            else if (tokens->items[i + 1].kind == MDTK_LINE_BREAK) {
+                current = NULL;
+                ++i;
+            }
 
+            continue;
+        } else if (token.kind == MDTK_HEADING_DELIMITER) {
+            reading_paragraph = false;
+            int hash_count = 0;
+            int j = i;
+            while (tokens->items[j++].kind == MDTK_HEADING_DELIMITER)
+                ++hash_count;
+
+            --j;
+
+            // TODO: if it's not valid, write the text and hashes
+            bool has_space = (tokens->items[j].content[0] == ' ');
+            if (hash_count <= 6 && has_space) {
+                char heading[3] = { 'h', hash_count + '0', '\0' };
+                dtree_insert(body, tag_make(TAGTYPE_ELEMENT, heading));
+                current = body->nodes[body->nchild - 1];
+            }
+
+            i = j - 1;
             continue;
         }
 
         if (!current) {
-            switch (token.kind) {
-                default:
-                    dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
-            }
-
-            if (!current)
-                current = body->nodes[body->nchild - 1];
+            reading_paragraph = true;
+            dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
+            current = body->nodes[body->nchild - 1];
         }
 
+        token = tokens->items[i];
         if (token.kind == MDTK_TEXT)
             dtree_insert(current, tag_make(TAGTYPE_TEXT, token.content));
         else if (token.kind == MDTK_ITALIC_DELIMITER &&
@@ -115,4 +137,13 @@ char *read_file(const char *path)
     file[idx - 1] = '\0';
     fclose(f);
     return file;
+}
+
+char *repeat_char(char c, int count)
+{
+    char *s = calloc(count + 1, sizeof(char));
+    for (int i = 0; i < count; ++i)
+        s[i] = c;
+    s[count] = '\0';
+    return s;
 }

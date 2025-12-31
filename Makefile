@@ -1,10 +1,11 @@
 CC = gcc
 SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
+CFLAGS = -g -Wall -Wextra
 OUT = artw
 
 default: artw.o mdlexer.o dtree.o tag.o
-	$(CC) -o $(OUT) $(OBJ)
+	$(CC) -o $(OUT) $(CFLAGS) $(OBJ)
 
 clean:
 	rm *.o
