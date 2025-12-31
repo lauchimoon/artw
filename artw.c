@@ -8,7 +8,6 @@
 #define streq(a, b) (strcmp((a), (b)) == 0)
 
 char *read_file(const char *path);
-char *repeat_char(char c, int count);
 
 int main(int argc, char **argv)
 {
@@ -137,13 +136,4 @@ char *read_file(const char *path)
     file[idx - 1] = '\0';
     fclose(f);
     return file;
-}
-
-char *repeat_char(char c, int count)
-{
-    char *s = calloc(count + 1, sizeof(char));
-    for (int i = 0; i < count; ++i)
-        s[i] = c;
-    s[count] = '\0';
-    return s;
 }
