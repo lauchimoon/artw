@@ -5,8 +5,6 @@
 #include "dtree.h"
 #include "mdlexer.h"
 
-#define streq(a, b) (strcmp((a), (b)) == 0)
-
 char *read_file(const char *path);
 
 int main(int argc, char **argv)
