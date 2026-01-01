@@ -41,12 +41,13 @@ int main(int argc, char **argv)
     bool reading_paragraph = false;
     bool reading_ul = false;
     bool reading_ol = false;
+    bool reading_code = false;
     for (int i = 0; i < tokens->len; ++i) {
         MDToken token = tokens->items[i];
         if (token.kind == MDTK_LINE_BREAK) {
-            if (!reading_paragraph && !reading_ul && !reading_ol)
+            if (!reading_paragraph && !reading_ul && !reading_ol && !reading_code)
                 current = NULL;
-            else if (tokens->items[i + 1].kind == MDTK_LINE_BREAK) {
+            else if (tokens->items[i + 1].kind == MDTK_LINE_BREAK && !reading_code) {
                 reading_ul = false;
                 reading_ol = false;
                 current = NULL;
@@ -58,6 +59,7 @@ int main(int argc, char **argv)
             reading_paragraph = false;
             reading_ul = false;
             reading_ol = false;
+            reading_code = false;
             int hash_count = 0;
             int j = i;
             while (tokens->items[j++].kind == MDTK_HEADING_DELIMITER)
@@ -77,6 +79,8 @@ int main(int argc, char **argv)
             continue;
         } else if (token.kind == MDTK_UL_DELIMITER) {
             reading_paragraph = false;
+            reading_ol = false;
+            reading_code = false;
             if (!reading_ul) {
                 dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "ul"));
                 ul = body->nodes[body->nchild - 1];
@@ -88,6 +92,8 @@ int main(int argc, char **argv)
             continue;
         } else if (token.kind == MDTK_OL_DELIMITER) {
             reading_paragraph = false;
+            reading_ul = false;
+            reading_code = false;
             if (!reading_ol) {
                 dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "ol"));
                 ol = body->nodes[body->nchild - 1];
@@ -96,6 +102,21 @@ int main(int argc, char **argv)
             dtree_insert(ol, tag_make(TAGTYPE_ELEMENT, "li"));
             current = ol->nodes[ol->nchild - 1];
             reading_ol = true;
+            continue;
+        } else if (token.kind == MDTK_CODEBLOCK) {
+            reading_paragraph = false;
+            reading_ol = false;
+            reading_ul = false;
+            if (!reading_code) {
+                // Preserve newlines
+                dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "pre"));
+                DOMTree pre = body->nodes[body->nchild - 1];
+                dtree_insert(pre, tag_make(TAGTYPE_ELEMENT, "code"));
+                current = pre->nodes[pre->nchild - 1];
+            }
+
+            reading_code = !reading_code;
+            ++i;
             continue;
         }
 

@@ -9,6 +9,7 @@ int main()
 }
 ```
 
+Then we have
 ```python
 # Hello world in Python
 print("Hello world")
