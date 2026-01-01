@@ -9,7 +9,6 @@ Implements:
 - Links
 - Images
 - Lists (ordered and unordered)
-- Breaks
 - Code sections
 
 Note this is a hobby project, so this is *not* guaranteed to properly parse cases like:
