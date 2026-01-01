@@ -37,15 +37,18 @@ int main(int argc, char **argv)
     // Build DOMTree
     DOMTree current = NULL;
     DOMTree ul = NULL;
+    DOMTree ol = NULL;
     bool reading_paragraph = false;
     bool reading_ul = false;
+    bool reading_ol = false;
     for (int i = 0; i < tokens->len; ++i) {
         MDToken token = tokens->items[i];
         if (token.kind == MDTK_LINE_BREAK) {
-            if (!reading_paragraph && !reading_ul)
+            if (!reading_paragraph && !reading_ul && !reading_ol)
                 current = NULL;
             else if (tokens->items[i + 1].kind == MDTK_LINE_BREAK) {
                 reading_ul = false;
+                reading_ol = false;
                 current = NULL;
                 ++i;
             }
@@ -54,6 +57,7 @@ int main(int argc, char **argv)
         } else if (token.kind == MDTK_HEADING_DELIMITER) {
             reading_paragraph = false;
             reading_ul = false;
+            reading_ol = false;
             int hash_count = 0;
             int j = i;
             while (tokens->items[j++].kind == MDTK_HEADING_DELIMITER)
@@ -73,7 +77,6 @@ int main(int argc, char **argv)
             continue;
         } else if (token.kind == MDTK_UL_DELIMITER) {
             reading_paragraph = false;
-
             if (!reading_ul) {
                 dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "ul"));
                 ul = body->nodes[body->nchild - 1];
@@ -81,8 +84,18 @@ int main(int argc, char **argv)
 
             dtree_insert(ul, tag_make(TAGTYPE_ELEMENT, "li"));
             current = ul->nodes[ul->nchild - 1];
-
             reading_ul = true;
+            continue;
+        } else if (token.kind == MDTK_OL_DELIMITER) {
+            reading_paragraph = false;
+            if (!reading_ol) {
+                dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "ol"));
+                ol = body->nodes[body->nchild - 1];
+            }
+
+            dtree_insert(ol, tag_make(TAGTYPE_ELEMENT, "li"));
+            current = ol->nodes[ol->nchild - 1];
+            reading_ol = true;
             continue;
         }
 
