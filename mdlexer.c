@@ -56,7 +56,7 @@ MDTokenArray *mdlexer_lex(MDLexer *lexer)
             token.content = strdup("\\n");
             tokenarr_append(tokens, token);
             ++lexer->cursor;
-            ctx = CTX_FREE;
+            ctx = (ctx != CTX_READING_CODE)? CTX_FREE : CTX_READING_CODE;
         } else if (ctx == CTX_FREE && current == '*' && lexer_peek(lexer) == '*') {
             token.kind = MDTK_BOLD_DELIMITER;
             token.content = strdup("**");
