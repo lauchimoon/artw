@@ -25,6 +25,7 @@ void dtree_free(DOMTree t)
     for (int i = 0; i < t->maxchild; ++i)
         dtree_free(t->nodes[i]);
 
+    tag_free(t->tag);
     free(t->tag.content);
     free(t->nodes);
     free(t);
