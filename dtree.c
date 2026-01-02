@@ -82,8 +82,10 @@ void tagcpy(Tag *dst, Tag src)
     dst->type = src.type;
     dst->content = strdup(src.content);
     dst->num_attrs = src.num_attrs;
-    for (int i = 0; i < src.num_attrs; ++i)
-        dst->attrs[i] = src.attrs[i];
+    for (int i = 0; i < src.num_attrs; ++i) {
+        dst->attrs[i].type = src.attrs[i].type;
+        dst->attrs[i].value = strdup(src.attrs[i].value);
+    }
 }
 
 void dtree_print_helper(DOMTree t, int level, FILE *out_file)

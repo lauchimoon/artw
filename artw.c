@@ -118,10 +118,42 @@ int main(int argc, char **argv)
             reading_code = !reading_code;
             ++i;
             continue;
-        }
+        } else if (token.kind == MDTK_ALT_START &&
+                    tokens->items[i + 2].kind == MDTK_ALT_END &&
+                    tokens->items[i + 3].kind == MDTK_LINK_START &&
+                    tokens->items[i + 5].kind == MDTK_LINK_END) {
+            char *alt_text = tokens->items[i + 1].content;
+            char *url_text = tokens->items[i + 4].content;
+            bool is_image = (tokens->items[i - 1].kind == MDTK_IMAGE_DELIMITER);
+
+            if (is_image) {
+                Tag image_tag = tag_make(TAGTYPE_ELEMENT, "img");
+                tag_add_attr(&image_tag, tag_attr_make(TAG_ATTR_SRC, url_text));
+                tag_add_attr(&image_tag, tag_attr_make(TAG_ATTR_ALT, alt_text));
+                dtree_insert(current? current : body, image_tag);
+            } else {
+                if (!current) {
+                    dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
+                    current = body->nodes[body->nchild - 1];
+                }
+
+                Tag a_tag = tag_make(TAGTYPE_ELEMENT, "a");
+                tag_add_attr(&a_tag, tag_attr_make(TAG_ATTR_HREF, url_text));
+                dtree_insert(current, a_tag);
+
+                DOMTree a = current->nodes[current->nchild - 1];
+                dtree_insert(a, tag_make(TAGTYPE_TEXT, alt_text));
+            }
+
+            i += 5;
+            continue;
+        } else if (token.kind == MDTK_IMAGE_DELIMITER)
+            continue;
 
         if (!current) {
             reading_ul = false;
+            reading_ol = false;
+            reading_code = false;
             reading_paragraph = true;
             dtree_insert(body, tag_make(TAGTYPE_ELEMENT, "p"));
             current = body->nodes[body->nchild - 1];
