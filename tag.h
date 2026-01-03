@@ -12,6 +12,7 @@ typedef enum {
     TAG_ATTR_SRC = 0,
     TAG_ATTR_HREF,
     TAG_ATTR_ALT,
+    TAG_ATTR_REL,
 } TagAttrType;
 
 typedef struct TagAttr {

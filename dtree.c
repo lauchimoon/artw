@@ -130,6 +130,7 @@ const char *attr_type_string(TagAttrType type)
         case TAG_ATTR_SRC: return "src";
         case TAG_ATTR_HREF: return "href";
         case TAG_ATTR_ALT: return "alt";
+        case TAG_ATTR_REL: return "rel";
     }
 
     return "?";

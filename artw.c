@@ -5,31 +5,51 @@
 #include "dtree.h"
 #include "mdlexer.h"
 
+#define streq(a, b) (strcmp((a), (b)) == 0)
+
 char *read_file(const char *path);
 
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        printf("usage: %s <markdown file> [output file]\n", argv[0]);
+        printf("usage: %s <markdown file> [-o/--out output file] [-s/--style style file]\n", argv[0]);
         return 1;
     }
 
-    FILE *output_file = (argc < 3)? stdout : fopen(argv[2], "w");
-
-    DOMTree root = dtree_make();
-    Tag html_tag = tag_make(TAGTYPE_ELEMENT, "html");
-    Tag body_tag = tag_make(TAGTYPE_ELEMENT, "body");
-
-    root = dtree_insert(root, html_tag);
-    dtree_insert(root, body_tag);
-    DOMTree body = root->nodes[root->nchild - 1];
-
+    FILE *output_file = stdout;
     const char *src_filename = argv[1];
+    char *stylesheet_path = NULL;
     char *src = read_file(src_filename);
     if (!src) {
         printf("%s: file '%s' does not exist or is not a Markdown file.\n", argv[0], src_filename);
         return 1;
     }
+
+    for (int i = 2; i < argc; i++) {
+        if (streq(argv[i], "-o") || streq(argv[i], "--out"))
+            output_file = fopen(argv[i + 1], "w");
+        else if (streq(argv[i], "-s") || streq(argv[i], "--style"))
+            stylesheet_path = argv[i + 1];
+    }
+
+    DOMTree root = dtree_make();
+    Tag html_tag = tag_make(TAGTYPE_ELEMENT, "html");
+    Tag head_tag = tag_make(TAGTYPE_ELEMENT, "head");
+    Tag body_tag = tag_make(TAGTYPE_ELEMENT, "body");
+
+    root = dtree_insert(root, html_tag);
+    dtree_insert(root, head_tag);
+    if (stylesheet_path) {
+        Tag link_tag = tag_make(TAGTYPE_ELEMENT, "link");
+        tag_add_attr(&link_tag, tag_attr_make(TAG_ATTR_REL, "stylesheet"));
+        tag_add_attr(&link_tag, tag_attr_make(TAG_ATTR_HREF, stylesheet_path));
+
+        DOMTree head = root->nodes[root->nchild - 1];
+        dtree_insert(head, link_tag);
+    }
+
+    dtree_insert(root, body_tag);
+    DOMTree body = root->nodes[root->nchild - 1];
 
     MDLexer *lexer = mdlexer_new(src);
     MDTokenArray *tokens = mdlexer_lex(lexer);
