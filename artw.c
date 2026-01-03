@@ -177,8 +177,7 @@ int main(int argc, char **argv)
             dtree_insert(bold, tag_make(TAGTYPE_TEXT, text.content));
             i += 2;
         } else {
-            printf("%s: ", token.content);
-            printf("TODO: token not implemented\n");
+            printf("%s: unknown token '%s'", argv[0], token.content);
             return 1;
         }
     }
