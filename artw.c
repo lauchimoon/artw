@@ -6,33 +6,93 @@
 #include "mdlexer.h"
 
 #define streq(a, b) (strcmp((a), (b)) == 0)
+#define PROGRAM_NAME "argv"
+
+DOMTree root = NULL;
+DOMTree body = NULL;
+FILE *output_file;
+char *stylesheet_path = NULL;
 
 char *read_file(const char *path);
+void parse_commandline_arguments(int argc, char **argv);
+void setup_tree(void);
+int build_domtree(MDTokenArray *tokens);
 
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        printf("usage: %s <markdown file> [-o/--out output file] [-s/--style style file]\n", argv[0]);
+        printf("usage: %s <markdown file> [-o/--out output file] [-s/--style style file]\n", PROGRAM_NAME);
         return 1;
     }
 
-    FILE *output_file = stdout;
-    const char *src_filename = argv[1];
-    char *stylesheet_path = NULL;
+    output_file = stdout;
+    char *src_filename = argv[1];
     char *src = read_file(src_filename);
     if (!src) {
         printf("%s: file '%s' does not exist or is not a Markdown file.\n", argv[0], src_filename);
         return 1;
     }
 
+    parse_commandline_arguments(argc, argv);
+
+    setup_tree();
+
+    MDLexer *lexer = mdlexer_new(src);
+    MDTokenArray *tokens = mdlexer_lex(lexer);
+
+    int result = build_domtree(tokens);
+    if (result != 0)
+        return 1;
+
+    dtree_print(root, output_file);
+
+    mdlexer_tokenarray_free(tokens);
+    mdlexer_free(lexer);
+    dtree_free(root);
+    free(src);
+    return 0;
+}
+
+char *read_file(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return NULL;
+
+    if (!strstr(path, ".md"))
+        return NULL;
+
+    fseek(f, 0L, SEEK_END);
+    size_t filesize = ftell(f);
+    fseek(f, 0L, SEEK_SET);
+
+    char *file = calloc(filesize + 1, sizeof(char));
+    assert(file != NULL);
+
+#define BUFSIZE 2048
+    int idx = 0;
+    char c;
+    while ((c = fgetc(f)) != EOF)
+        file[idx++] = c;
+
+    file[idx - 1] = '\0';
+    fclose(f);
+    return file;
+}
+
+void parse_commandline_arguments(int argc, char **argv)
+{
     for (int i = 2; i < argc; i++) {
         if (streq(argv[i], "-o") || streq(argv[i], "--out"))
             output_file = fopen(argv[i + 1], "w");
         else if (streq(argv[i], "-s") || streq(argv[i], "--style"))
             stylesheet_path = argv[i + 1];
     }
+}
 
-    DOMTree root = dtree_make();
+void setup_tree(void)
+{
+    root = dtree_make();
     Tag html_tag = tag_make(TAGTYPE_ELEMENT, "html");
     Tag head_tag = tag_make(TAGTYPE_ELEMENT, "head");
     Tag body_tag = tag_make(TAGTYPE_ELEMENT, "body");
@@ -49,12 +109,11 @@ int main(int argc, char **argv)
     }
 
     dtree_insert(root, body_tag);
-    DOMTree body = root->nodes[root->nchild - 1];
+    body = root->nodes[root->nchild - 1];
+}
 
-    MDLexer *lexer = mdlexer_new(src);
-    MDTokenArray *tokens = mdlexer_lex(lexer);
-
-    // Build DOMTree
+int build_domtree(MDTokenArray *tokens)
+{
     DOMTree current = NULL;
     DOMTree ul = NULL;
     DOMTree ol = NULL;
@@ -197,43 +256,10 @@ int main(int argc, char **argv)
             dtree_insert(bold, tag_make(TAGTYPE_TEXT, text.content));
             i += 2;
         } else {
-            printf("%s: unknown token '%s'", argv[0], token.content);
+            printf("%s: unknown token '%s'", PROGRAM_NAME, token.content);
             return 1;
         }
     }
 
-    mdlexer_tokenarray_free(tokens);
-    mdlexer_free(lexer);
-
-    dtree_print(root, output_file);
-    dtree_free(root);
-    free(src);
     return 0;
-}
-
-char *read_file(const char *path)
-{
-    FILE *f = fopen(path, "r");
-    if (!f)
-        return NULL;
-
-    if (!strstr(path, ".md"))
-        return NULL;
-
-    fseek(f, 0L, SEEK_END);
-    size_t filesize = ftell(f);
-    fseek(f, 0L, SEEK_SET);
-
-    char *file = calloc(filesize + 1, sizeof(char));
-    assert(file != NULL);
-
-#define BUFSIZE 2048
-    int idx = 0;
-    char c;
-    while ((c = fgetc(f)) != EOF)
-        file[idx++] = c;
-
-    file[idx - 1] = '\0';
-    fclose(f);
-    return file;
 }
